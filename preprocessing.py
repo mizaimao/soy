@@ -36,16 +36,14 @@ del traits # save memory
 
 # read SNP from genotype file according of above samples
 snp_dic = {}
-SNPs = list(pd.read_csv('data/soysnp50k_wm82.a2_41317.txt',nrows=0,sep='\t', header=0))
-for sample in tqdm.tqdm(oil_dic):
+SNPs = list(pd.read_csv('data/soysnp50k_wm82.a2_41317.txt', sep='\t', header=0))
+na_count = 0
+for sampleID in oil_dic.keys():
     try:
-        index = SNPs.index(sample)
-        snp = subprocess.check_output('awk -F\'\t\' \'{print $%s}\' < data/soysnp50k_wm82.a2_41317.txt'%(index+1), shell=True)
-        snp = snp.decode("utf-8") 
-        snp = snp.split('\n')
-        assert snp[0] == sample
-        snp_dic[sample] = [mapping[x] for x in snp[1:]]
-    except KeyError as e:
-        print('{} not presented in file'.format(sample))
-   
+        snp_dic[sampleID] = np.asarray([mapping[x] for x in df[sampleID]], dtype=np.int8)
+    except:
+        print('{} not presented'.format(sampleID))
+        na_count += 1 
+
+
 pickle.dump(snp_dic, open('snp.pickle','wb'))

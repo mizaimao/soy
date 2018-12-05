@@ -9,6 +9,8 @@ Sample count in SNP file: 20087
 Sample count in phenotype file: 20723
 Intersection: 19534
 
+17699 samples have oil production in phenotype record, and 124 amoung them are not in SNP file. Therefore, number of samples that are put into xgboost is 17575.
+
 
 Files:
 
