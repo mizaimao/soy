@@ -31,9 +31,8 @@ def basic_stats(v):
 filters={'NaN': 1.0,    # if NaN composes more than this ratio in a trait, the trait will not be plotted
         }
 
-# Load csv
+# load csv
 traits = pd.read_csv('data/Soybean_Traits.csv', header=0, low_memory=False)
-
 
 if not os.path.exists('plots'):
         os.makedirs('plots')
@@ -54,12 +53,12 @@ for trait_name in numerical_columns:
     trait_vector = trait_vector.dropna()
     # generating kde plot
     f, ax = plt.subplots()
-    # aesthetics
     sns.distplot(trait_vector, kde_kws={"shade": True,})
+    # aesthetics
     plt.title(trait_name + '  (n={})'.format(original_count-nan_count))
     plt.legend([basic_stats(trait_vector) + 'NaN: {}\nTotal: {}'.format(nan_count, original_count)])
     # saving images
     plt.savefig('plots/{}.png'.format(trait_name))
     plt.close()
 
-
+# add more sections accordingly if you want to plot other columns 

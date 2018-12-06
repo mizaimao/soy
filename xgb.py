@@ -5,28 +5,29 @@ import numpy as np
 import pickle
 from sklearn.model_selection import KFold
 from sklearn import metrics, preprocessing, linear_model
-from sklearn.metrics import log_loss, accuracy_score
+from sklearn.metrics import log_loss, accuracy_score, mean_squared_error
 import xgboost as xgb
 import random
 
+
+# xgboost parameters
 params = {'n_estimators': 1000,
-		 'learning_rate': 0.04,
+		 'learning_rate': 0.3,
 		 'max_depth':2,
          'silent':1,
          'subsample': 0.50,
          'colsample_bytree': 0.60,
-         'objective':'multi:softmax',
+         'objective':'reg:linear',
          'reg_lambda': 1,
          'reg_alpha': 1,
          'seed': 2018,
-         'nthread': 8,
-         'tree_method': 'gpu_hist',
+         'nthread': 8, # number of cores that are used
          }
 
 
 def main():
     # Set seed for reproducibility
-    np.random.seed(4439854)
+    np.random.seed(890890890)
 
     print("Loading data...")
     # Load the data from the pickle files
@@ -34,40 +35,36 @@ def main():
     snp_dic = pickle.load(open('data/snp.pickle','rb'))
     oil_vector = []
     snp_matrix = []
+
     random_keys = list(snp_dic.keys())
     random.shuffle(random_keys)
-    for k in random_keys:
-        oil_vector.append(int(oil_dic[k]//1))
-        snp_matrix.append(snp_dic[k][:50])
-    Y = np.asarray(oil_vector, dtype=np.int8)
+    size = int(len(random_keys) * 0.1) # currently using 1/10 of samples for testing purposes
+    for k in random_keys[:size]: # getting labels and features 
+        oil_vector.append(oil_dic[k])
+        snp_matrix.append(snp_dic[k][:100]) # using first 100 SNPs for testing purposes; remember to change this to include all features
+    Y = np.asarray(oil_vector, dtype=np.float32) # cast them to numpy data format
     X = np.asarray(snp_matrix, dtype=np.int8)
-    
-    num_class = len(np.unique(Y))
-    params['num_class'] = num_class
-    print(num_class)
-    del oil_dic; del snp_dic; del oil_vector; del snp_matrix
+
+    del oil_dic; del snp_dic; del oil_vector; del snp_matrix # delete large objects that will no longer be used to save memory
 
     # This is your model that will learn to predict
-    #model = linear_model.LogisticRegression(n_jobs=-1)
     model = xgb.XGBClassifier(**params)
 
     # cross validation
     print("Cross-validation:")
     K = 5
     i = 0
-    accs = []
+    mses = [] # stores MSE of each fold
     kf = KFold(n_splits=K, shuffle=True, random_state=2018)
     for train, val in kf.split(X):
-        i += 1 
+        i += 1
         model.fit(X[train, :], Y[train])
-        pred_prob = model.predict_proba(X[val, :])
-        pred = np.argmax(pred_prob, axis=1)
-        print(pred)
-        acc = accuracy_score(Y[val], pred)
-        accs.append(acc)
-        print("accuracy %d/%d:" % (i, K), acc)
+        pred = model.predict(X[val, :])
+        mse = mean_squared_error(Y[val], pred)
+        mses.append(mse)
+        print("MSE %d/%d:" % (i, K), mse)
         pass
-
+    print('average MSE: {}'.format(np.mean(mses)))
 
 if __name__ == '__main__':
     main()
